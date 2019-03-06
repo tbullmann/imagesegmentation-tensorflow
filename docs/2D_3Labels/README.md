@@ -22,14 +22,14 @@ python tools/split.py \
 
 ## Training 
 
-Train the classifier for the direction "AtoB" (EM images to labels) using paired-to-image translation with a residual net as the generator:
+Train the networks to segment EM images to labels using a residual net:
 ```bash
-python imagetranslation/translate.py   --mode train \
+python translate.py  --mode train \
   --input_dir datasets/vnc/combined/train \
   --output_dir temp/Example_2D_3Labels/train \
-  --Y_loss square \
+  --loss square \ 
   --network resnet \
-  --max_epochs 2000  --display_freq 50
+  --max_epochs 2000  --display_freq 100  --save_freq 1000
 ```
 
 The `--display_freq 50` will output an HTML file at `temp/Example_2D_3Labels/train/index.html` that shows input/output/target image sets every 50 steps.
@@ -45,9 +45,9 @@ tensorboard --logdir temp/Example_2D_3Labels
 
 Use the model to predict labels for new data
 ```bash
-python imagetranslation/translate.py   --mode test \
-  --checkpoint temp/Example_2D_3Labels/train \
+python translate.py   --mode predict \
   --input_dir datasets/vnc/stack2/raw \
+  --checkpoint temp/Example_2D_3Labels/train \
   --output_dir temp/Example_2D_3Labels/predict \
   --image_height 1024  --image_width 1024
 ```
@@ -58,9 +58,9 @@ The prediction run will output the **labels only**, at `temp/Example_2D_3Labels/
 
 Test the model
 ```bash
-python imagetranslation/translate.py   --mode test \
-  --checkpoint temp/Example_2D_3Labels/train \
+python translate.py   --mode test \
   --input_dir datasets/vnc/combined/val \
+  --checkpoint temp/Example_2D_3Labels/train \
   --output_dir temp/Example_2D_3Labels/test \
   --image_height 1024  --image_width 1024
 ```
@@ -91,11 +91,9 @@ bash tools/evaluate.sh temp/Example_2D_3Labels/test/images synapses
 
 ![Result](Example_2D_3Labels_eval_synapses.jpg)
 
-Typical values are RAND=0.490, MI = 0.309 for the membrane label.
-The segmentation of individual mitochondria has an adjusted RAND=0.309,
-precision = 1.000, recall = 0.347, F-Score = 0.502 and and adjusted RAND error = 0.497.
-
-**There are no false positive synapses, but almost two third of them are not recognized (in a single section).**
+Typical values are RAND = ?????, MI = ????? for the synapse label.
+The segmentation of individual synapses has an adjusted RAND = ?????,
+precision = ?????, recall = ?????, F-Score = ????? and and adjusted RAND error = ?????.
 
 
 ### Mitochondria
@@ -117,11 +115,10 @@ bash tools/evaluate.sh temp/Example_2D_3Labels/test mitochondria
 
 ![Result](Example_2D_3Labels_eval_mitochondria.jpg)
 
-Typical values are RAND=0.891, MI = 0.757 for the membrane label.
-The segmentation of individual mitochondria has an adjusted RAND=0.999,
-precision = 0.961, recall = 0.911, F-Score = 0.935 and and adjusted RAND error = 0.065.
+Typical values are RAND = ?????, MI = ????? for the mitochondria label.
+The segmentation of individual mitochondria has an adjusted RAND = ?????,
+precision = ?????, recall = ?????, F-Score = ????? and and adjusted RAND error = ?????.
 
-**Most of the mitochondria are correctly labelled and segmented.**
 
 ### Membranes and segmentation of neurons
 
@@ -142,12 +139,9 @@ bash tools/evaluate.sh temp/Example_2D_3Labels/test membranes
 
 ![Result](Example_2D_3Labels_eval_membranes.jpg)
 
-Typical values are RAND=0.7850, MI = 0.629 for the membrane label.
-The segmentation of neurons based on the membrane label (`--segment_by 1`) has an adjusted RAND=0.998,
-precision = 0.912, recall =	0.962, F-Score = 0.936 and and adjusted RAND error = 0.064.
-
-**The membrane label does not fully overlap with the ground truth.
-However, the segmentation of neurons does not depend on minor variation of the membrane outlines.**
+Typical values are RAND = ?????, MI = ????? for the membrane label.
+The segmentation of individual neurons has an adjusted RAND = ?????,
+precision = ?????, recall = ?????, F-Score = ????? and and adjusted RAND error = ?????.
 
 
 You might want to evaluate the neuron segmentation during the training:
@@ -159,6 +153,6 @@ bash tools/evaluate.sh temp/Example_2D_3Labels/train membranes
 ## Notes
 
 A short description of the evaluation metrics can be found on the [SNEMI3D website](http://brainiac2.mit.edu/isbi_challenge/evaluation
-) for which an [matlab implementation](SNEMI3D_metrics.m) is available.
+).
 
 Perhaps, other metrics could be used. See this comprehensive [survey](https://bmcmedimaging.biomedcentral.com/articles/10.1186/s12880-015-0068-x) for biomedical segmentation metrics which has been carried out using this [C implementation](https://github.com/Visceral-Project/EvaluateSegmentation).
