@@ -26,7 +26,7 @@ parser.add_argument("--workers", type=int, default=1, help="number of workers")
 parser.add_argument("--pad", action="store_true", help="pad instead of crop for resize operation")
 parser.add_argument("--size", type=int, default=256, help="size to use for resize operation")
 # combine
-parser.add_argument("--b_dir", type=str, help="path to folder containing B images for combine operation")
+parser.add_argument("--target_dir", type=str, help="path to folder containing label images for combine operation")
 a = parser.parse_args()
 
 
@@ -72,13 +72,13 @@ def blank(src):
 
 
 def combine(src, src_path):
-    if a.b_dir is None:
-        raise Exception("missing b_dir")
+    if a.target_dir is None:
+        raise Exception("missing target_dir")
 
-    # find corresponding file in b_dir, could have a different extension
+    # find corresponding file in target_dir, could have a different extension
     basename, _ = os.path.splitext(os.path.basename(src_path))
     for ext in [".png", ".jpg"]:
-        sibling_path = os.path.join(a.b_dir, basename + ext)
+        sibling_path = os.path.join(a.target_dir, basename + ext)
         if os.path.exists(sibling_path):
             sibling = im.load(sibling_path)
             break
