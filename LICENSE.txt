@@ -1,4 +1,4 @@
-Copyright for portions of project imagetranslation-tensorflow are held by Christopher Hesse, 2017 
+Copyright for portions of project imagesegmentation-tensorflow are held by Christopher Hesse, 2017
 as part of project pix2pix-tensorflow, see (1). All other copyright for project 
 imagetranslation-tensorflow are held by Torsten Bullmann, 2017, see (2).
 
