@@ -6,7 +6,7 @@
 
 ## Getting Started
 
-- Create environment and install requirements, see [instructions](CONDA.md)
+- Create environment and install requirements
 - Clone this repository
 
 ```bash
