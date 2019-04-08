@@ -13,14 +13,9 @@ import collections
 import math
 import time
 
-# # dynamic memory allocation
-# config = tf.ConfigProto()
-# config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
-# config.log_device_placement = True  # to log device placement (on which device the operation ran)
-#                                     # (nothing gets printed in Jupyter, only if you run it standalone)
-# sess = tf.Session(config=config)
-# set_session(sess)  # set this TensorFlow session as the default session for Keras
-
+# Dynamic GPU memory allocation to train multiple models on one GPU
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mode", required=True, choices=["train", "test", "predict"])
@@ -735,7 +730,7 @@ def main():
 
     logdir = a.output_dir if (a.trace_freq > 0 or a.summary_freq > 0) else None
     sv = tf.train.Supervisor(logdir=logdir, save_summaries_secs=0, saver=None)
-    with sv.managed_session() as sess:
+    with sv.managed_session(config=config) as sess:
         print("parameter_count =", sess.run(parameter_count))
 
         if a.checkpoint is not None:
