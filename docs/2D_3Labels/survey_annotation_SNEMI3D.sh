@@ -19,7 +19,7 @@ for i in `seq 1 16`;
 do
 	fraction=$(echo "scale=2; $i / 20" | bc)
 	python imagetranslation/tools/split.py --train_frac $fraction \
-	--dir temp/publication/amount_ground_truth/datasets/combined$i
+	--dir temp/survey_annotation/snemi3d/datasets/combined$i
 done
 
 
@@ -27,26 +27,25 @@ done
 for i in `seq 1 16`;
 do
 	max_epochs=$(echo "4800/$i" | bc)
-	python imagetranslation/translate.py  --model pix2pix  --mode train  --generator resnet \
-	--output_dir temp/publication/amount_ground_truth/train/$i \
-	--input_dir temp/publication/amount_ground_truth/datasets/combined$i/train \
-    --flipud  --fliplr  --transpose \
-	--which_direction AtoB  --Y_loss square \
-	--display_freq 100  --max_epochs $max_epochs
+	python imagetranslation/translate.py  --mode train  --network resnet \
+	--output_dir temp/survey_annotation/snemi3d/train/$i \
+	--input_dir datasets/snemi3d/combined2_$i/train \
+	--loss square \
+	--display_freq 500  --max_epochs 2000
+		
 done
 
 ### Test and evaluate
 for i in `seq 1 16`;
 do
 	python imagetranslation/translate.py   --mode test \
-	--checkpoint temp/publication/amount_ground_truth/train/$i \
-	--input_dir temp/publication/amount_ground_truth/datasets/combined$i/val \
-	--output_dir temp/publication/amount_ground_truth/test/$i \
-	  --model pix2pix   --generator resnet \
-	  --image_height 1024  --image_width 1024
-	bash tools/evaluate.sh temp/publication/amount_ground_truth/test/$i synapses
-	bash tools/evaluate.sh temp/publication/amount_ground_truth/test/$i mitochondria
-	bash tools/evaluate.sh temp/publication/amount_ground_truth/test/$i membranes
+	    --checkpoint temp/survey_annotation/snemi3d/train/$i \
+	    --input_dir datasets/snemi3d/combined2_$i/val \
+	    --output_dir datasets/snemi3d/combined2_$i/test \
+	    --image_height 1024  --image_width 1024
+	bash tools/evaluate.sh temp/survey_annotation/snemi3d/test/$i synapses
+	bash tools/evaluate.sh temp/survey_annotation/snemi3d/test/$i mitochondria
+	bash tools/evaluate.sh temp/survey_annotation/snemi3d/test/$i membranes
 done
 
 
