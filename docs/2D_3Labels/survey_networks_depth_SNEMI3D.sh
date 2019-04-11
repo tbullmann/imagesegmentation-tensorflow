@@ -4,7 +4,7 @@
 python tools/process.py \
     --operation combine \
     --input_dir  datasets/snemi3d/clahe/ \
-    --target_dir  datasets/snemi3d/labels3/ \
+    --target_dir  datasets/snemi3d/label3/ \
     --output_dir datasets/snemi3d/clahe2label3/
 
 python tools/split.py \
@@ -18,7 +18,7 @@ do
 	((counter++))
 	python translate.py    --mode train \
 	--network unet  --u_depth $n_depth  \
-	--output_dir temp/survey_depth/VCN/train/$counter \
+	--output_dir temp/survey_depth/snemi3d/train/$counter \
 	--input_dir datasets/snemi3d/clahe2label3/train \
 	--loss square  --batch_size 8  \
 	--display_freq 2000  --max_epochs 2000
@@ -29,7 +29,7 @@ do
 	((counter++))
 	python translate.py    --mode train \
 	--network densenet  --n_dense_blocks $n_dense_blocks  \
-	--output_dir temp/survey_depth/VCN/train/$counter \
+	--output_dir temp/survey_depth/snemi3d/train/$counter \
 	--input_dir datasets/snemi3d/clahe2label3/train \
 	--loss square  --batch_size 8  \
 	--display_freq 2000  --max_epochs 2000
@@ -40,7 +40,7 @@ do
 	((counter++))
 	python translate.py    --mode train \
 	--network highwaynet  --n_highway_units $n_highway_units  \
-	--output_dir temp/survey_depth/VCN/train/$counter \
+	--output_dir temp/survey_depth/snemi3d/train/$counter \
 	--input_dir datasets/snemi3d/clahe2label3/train \
 	--loss square  --batch_size 8  \
 	--display_freq 2000  --max_epochs 2000
@@ -51,7 +51,7 @@ do
 	((counter++))
 	python translate.py    --mode train \
 	--network resnet  --n_res_blocks $n_res_blocks \
-	--output_dir temp/survey_depth/VCN/train/$counter \
+	--output_dir temp/survey_depth/snemi3d/train/$counter \
 	--input_dir datasets/snemi3d/clahe2label3/train \
 	--loss square  --batch_size 8  \
 	--display_freq 2000  --max_epochs 2000
@@ -62,16 +62,18 @@ done
 for i in `seq 1 $counter`;
 do
 	python translate.py   --mode test \
-	--checkpoint temp/survey_depth/VCN/train/$i \
-	--output_dir temp/survey_depth/VCN/test/$i \
+	--checkpoint temp/survey_depth/snemi3d/train/$i \
+	--output_dir temp/survey_depth/snemi3d/test/$i \
 	--input_dir datasets/snemi3d/clahe2label3/val \
     --image_width 1024  --image_height 1024
 done
 
+counter=20
+
 #### Evaluate
 for i in `seq 1 $counter`;
 do
-	bash tools/evaluate.sh temp/survey_depth/VCN/test/$i synapses
-	bash tools/evaluate.sh temp/survey_depth/VCN/test/$i mitochondria
-	bash tools/evaluate.sh temp/survey_depth/VCN/test/$i membranes
+	bash tools/evaluate.sh temp/survey_depth/snemi3d/test/$i synapses
+	bash tools/evaluate.sh temp/survey_depth/snemi3d/test/$i mitochondria
+	bash tools/evaluate.sh temp/survey_depth/snemi3d/test/$i membranes
 done

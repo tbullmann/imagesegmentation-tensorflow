@@ -97,7 +97,7 @@ do
 for i in `seq 1 3`;
 do
 	((counter++))
-	python translate.py  --model pix2pix  --mode test \
+	python translate.py --mode test \
 	--checkpoint temp/survey_loss/snemi3d/train/$counter \
 	--output_dir temp/survey_loss/snemi3d/test/$counter \
 	--input_dir datasets/snemi3d/combined_$i/val \
