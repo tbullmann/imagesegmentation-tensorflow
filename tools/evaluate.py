@@ -6,7 +6,7 @@ from collections import Counter
 import os
 import argparse
 import glob
-from sklearn.metrics.cluster import adjusted_rand_score, adjusted_mutual_info_score
+from sklearn.metrics.cluster import adjusted_rand_score
 import pandas as pd
 import numpy as np
 
@@ -15,20 +15,27 @@ from skimage.measure import label as regions
 from scipy.sparse import csr_matrix
 
 
-def segmentation_metrics(true_label, pred_label):
+def label_segmentation_metrics(true_label, pred_label):
     """
-    Implements pixel wise classic (adjusted for chance) RAND and MI score.
+    Implements semantic segmentation scores,  e.g. on true or false label.
+    :param true_label, pred_label: corresponding boolean values, true for label, false for background
+    :return: Jaccard, Dice, Conformity, adjusted_RAND
     """
 
-    RAND_label = adjusted_rand_score(true_label.ravel(), pred_label.ravel())
-    MI_label = adjusted_mutual_info_score(true_label.ravel(), pred_label.ravel())
+    Jaccard = 0
+    Dice = 0
+    Conformity = 0
+    adjusted_RAND = adjusted_rand_score(true_label.ravel(), pred_label.ravel())
 
-    return RAND_label, MI_label
+
+    return Jaccard, Dice, Conformity, adjusted_RAND
 
 
 def SNEMI3D_metrics(true_segm, pred_segm):
     """
-    Implements segmentation wise scores from the SNEMI3D challenge.
+    Implements instance segmentation scores from the SNEMI3D challenge, e.g. on separate, indexed objects.
+    :param true_segm, pred_segm: corresponding integer values, one for each object, 0 for background
+    :return: Jaccard, Dice, Conformity, adapted_RAND_error
     """
 
     n = true_segm.size
@@ -57,7 +64,7 @@ def SNEMI3D_metrics(true_segm, pred_segm):
     Dice = 2 * sumAB / (sumA + sumB)
     Conformity = (2 * Jaccard - 1) / Jaccard
 
-    return RAND_index, precision, recall, F_score, adapted_RAND_error, Jaccard, Dice, Conformity
+    return Jaccard, Dice, Conformity, RAND_index, adapted_RAND_error
 
 
 def main():
@@ -92,21 +99,20 @@ def main():
         true_label = imread(true_path)[:, :, a.channel] > a.threshold
         pred_label = imread(pred_path)[:, :, a.channel] > a.threshold
 
-        # scores on labels
-        RAND_label, MI_label = segmentation_metrics(true_label, pred_label)
-        print("RAND_label = %1.3f, MI_label =%1.3f\n" % (RAND_label, MI_label))
+        # scores on semantic segmentation
+        semantic_Jaccard, semantic_Dice, semantic_Conformity, semantic_RAND = label_segmentation_metrics(true_label, pred_label)
+        print("semantic: Jaccard = %1.3f, Dice =%1.3f, conformity = %1.3f, RAND =%1.3f\n" % (semantic_Jaccard, semantic_Dice, semantic_Conformity, semantic_RAND))
 
-        #scores on segmentation into regions
+        # scores on instance segmentation
         true_segm = regions(true_label, background=a.segment_by)
         pred_segm = regions(pred_label, background=a.segment_by)
-        RAND, precision, recall, F_score, adapted_RAND_error, Jaccard, Dice, Conformity = SNEMI3D_metrics(true_segm, pred_segm)
-        print("RAND = %1.3f, precision = %1.3f, recall = %1.3f, F_score = %1.3f, adapted_RAND_error = %1.3f, Jaccard = %1.3f, Dice = %1.3f, Conformity = %1.3f"
-              % (RAND, precision, recall, F_score, adapted_RAND_error, Jaccard, Dice, Conformity))
+        instance_Jaccard, instance_Dice, instance_Conformity, instance_RAND, _ = SNEMI3D_metrics(true_segm, pred_segm)
+        print("instance: Jaccard = %1.3f, Dice = %1.3f, Conformity = %1.3f, RAND = %1.3f\n" % (instance_Jaccard, instance_Dice, instance_Conformity, instance_RAND))
 
-        dst.append([relpath(pred_path), relpath(true_path), RAND_label, MI_label, RAND, precision, recall, F_score, adapted_RAND_error, Jaccard, Dice, Conformity])
+        dst.append([relpath(pred_path), relpath(true_path), semantic_Jaccard, semantic_Dice, semantic_Conformity, semantic_RAND, instance_Jaccard, instance_Dice, instance_Conformity, instance_RAND])
 
     dst = pd.DataFrame(dst,
-                       columns=['pred_path', 'true_path', 'RAND_label', 'MI_label', 'RAND', 'precision', 'recall', 'F_score', 'adapted_RAND_error', 'Jaccard', 'Dice', 'Conformity'])
+                       columns=['pred_path', 'true_path', 'semantic_Jaccard', 'semantic_Dice', 'semantic_conformity', 'semantic_adapted_RAND', 'instance_Jaccard', 'instance_Dice', 'instance_conformity', 'instance_RAND',  ])
     dst['sample'] = dst.index
     dst.to_csv(output_path, index=False)
 
