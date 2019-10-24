@@ -7,6 +7,7 @@ import os
 import argparse
 import glob
 from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.metrics import jaccard_score as jaccard
 import pandas as pd
 import numpy as np
 
@@ -22,9 +23,9 @@ def label_segmentation_metrics(true_label, pred_label):
     :return: Jaccard, Dice, Conformity, adjusted_RAND
     """
 
-    Jaccard = 0
-    Dice = 0
-    Conformity = 0
+    Jaccard = jaccard(true_label.ravel(), pred_label.ravel())
+    Dice = 2 * Jaccard / (1 + Jaccard)
+    Conformity = (2 * Jaccard - 1) / Jaccard
     adjusted_RAND = adjusted_rand_score(true_label.ravel(), pred_label.ravel())
 
 
@@ -42,7 +43,6 @@ def SNEMI3D_metrics(true_segm, pred_segm):
     overlap = Counter(zip(true_segm.ravel(), pred_segm.ravel()))
     data = list(overlap.values())     # csr_matrix needs a list not a dict_values object
     row_ind, col_ind = zip(*overlap.keys())
-
     p_ij = csr_matrix((data, (row_ind, col_ind)))
 
     a_i = np.array(p_ij[1:, :].sum(axis=1))
@@ -51,10 +51,10 @@ def SNEMI3D_metrics(true_segm, pred_segm):
     p_ij = p_ij[1:, 1:]
 
     sumA = (a_i * a_i).sum()
-    sumB = (b_j * b_j).sum() + p_i0.sum()/n
-    sumAB = p_ij.multiply(p_ij).sum() + p_i0.sum()/n
+    sumB = (b_j * b_j).sum() + p_i0.sum() / n
+    sumAB = p_ij.multiply(p_ij).sum() + p_i0.sum() / n
 
-    RAND_index = 1 - (sumA + sumB - 2*sumAB) / (n ** 2)
+    RAND_index = 1 - (sumA + sumB - 2 * sumAB) / (n ** 2)
     precision = sumAB / sumB
     recall = sumAB / sumA
     F_score = 2.0 * precision * recall / (precision + recall)
@@ -64,7 +64,9 @@ def SNEMI3D_metrics(true_segm, pred_segm):
     Dice = 2 * sumAB / (sumA + sumB)
     Conformity = (2 * Jaccard - 1) / Jaccard
 
-    return Jaccard, Dice, Conformity, RAND_index, adapted_RAND_error
+    # RAND index = 1 - RAND_error, therefore adapted RAND_index == F Score
+
+    return Jaccard, Dice, Conformity, F_score
 
 
 def main():
@@ -101,18 +103,18 @@ def main():
 
         # scores on semantic segmentation
         semantic_Jaccard, semantic_Dice, semantic_Conformity, semantic_RAND = label_segmentation_metrics(true_label, pred_label)
-        print("semantic: Jaccard = %1.3f, Dice =%1.3f, conformity = %1.3f, RAND =%1.3f\n" % (semantic_Jaccard, semantic_Dice, semantic_Conformity, semantic_RAND))
+        print("semantic: Jaccard = %1.3f, Dice =%1.3f, conformity = %1.3f, RAND =%1.3f" % (semantic_Jaccard, semantic_Dice, semantic_Conformity, semantic_RAND))
 
         # scores on instance segmentation
         true_segm = regions(true_label, background=a.segment_by)
         pred_segm = regions(pred_label, background=a.segment_by)
-        instance_Jaccard, instance_Dice, instance_Conformity, instance_RAND, _ = SNEMI3D_metrics(true_segm, pred_segm)
+        instance_Jaccard, instance_Dice, instance_Conformity, instance_RAND = SNEMI3D_metrics(true_segm, pred_segm)
         print("instance: Jaccard = %1.3f, Dice = %1.3f, Conformity = %1.3f, RAND = %1.3f\n" % (instance_Jaccard, instance_Dice, instance_Conformity, instance_RAND))
 
         dst.append([relpath(pred_path), relpath(true_path), semantic_Jaccard, semantic_Dice, semantic_Conformity, semantic_RAND, instance_Jaccard, instance_Dice, instance_Conformity, instance_RAND])
 
     dst = pd.DataFrame(dst,
-                       columns=['pred_path', 'true_path', 'semantic_Jaccard', 'semantic_Dice', 'semantic_conformity', 'semantic_adapted_RAND', 'instance_Jaccard', 'instance_Dice', 'instance_conformity', 'instance_RAND',  ])
+                       columns=['pred_path', 'true_path', 'semantic_Jaccard', 'semantic_Dice', 'semantic_conformity', 'semantic_adapted_RAND', 'instance_Jaccard', 'instance_Dice', 'instance_conformity', 'instance_RAND' ])
     dst['sample'] = dst.index
     dst.to_csv(output_path, index=False)
 
