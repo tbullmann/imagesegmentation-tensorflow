@@ -1,0 +1,15 @@
+cp --parents test/*/evaluation/*.csv summary
+
+A defaul resnet was trained with square loss
+for 2000 epochs independent training / test sets splits as follows:
+
+1    training with  5 images, test with 95 images
+2    training with 15 images, test with 90 images
+3    training with 20 images, test with 85 images
+...
+15   training with 75 images, test with 25 images
+
+
+You might add the data for the default resnet which was also
+trained with square loss for 2000 epochs with:
+     training with 80 images, test with 20 images

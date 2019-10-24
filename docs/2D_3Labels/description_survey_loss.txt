@@ -1,0 +1,10 @@
+cp --parents test/*/evaluation/*.csv summary
+
+Each loss has been trained for 2000 epochs on 3 independent training / test sets splits
+
+1-3 hinge loss
+4-6 square loss
+7-9 Softmax cross entropy loss for one-hot-labels
+10-12 Cross entropy for multi-class multi-label Using an approximation of cross entropy to avoid numerical instability
+13-15 dice loss
+16-18 logistic loss
